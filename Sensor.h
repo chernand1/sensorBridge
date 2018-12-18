@@ -15,7 +15,9 @@ class Sensor
     float returnTemp();
     byte readHTByte();
     float returnRegisterValue(int regAddress);
-    byte readI2CRegisters(int regAdress);
+    byte readI2CRegisters(int regAddress);
+    void writeToSensorControlReg(int regAddress, int data);
+    int isSensorEnabled(int sensorLocation);
     
     int registerAddressRequest;
     int byteCounter;
@@ -26,7 +28,7 @@ class Sensor
   	int _echoPin;
     int _dataHtPin;
 
-    // Registers
+    // Sensor output Registers
     // 
     // 0 Temp + Temp decimal
     // 1 Humid Data + Humid decimal
@@ -34,6 +36,11 @@ class Sensor
     int _tempOffset = 1;
     float _sensorRegisters[10];
     int _regCounter = 0;
+
+    // Sensor Control Registers
+    // Address 0 = Enabl/disable
+    // Bit 0 = 
+    int _sensorControlRegisters[32];
 
 };
 
@@ -149,18 +156,28 @@ float Sensor::returnRegisterValue(int regAddress)
   return _sensorRegisters[regAddress];
 }
 
-byte Sensor::readI2CRegisters(int regAdress)
+byte Sensor::readI2CRegisters(int regAddress)
 {
-  float regFloatVal = returnRegisterValue(regAdress);
+  float regFloatVal = returnRegisterValue(regAddress);
   byte *regFloatByte = (byte *)&regFloatVal;
   byte byteToReturn = regFloatByte[_regCounter];
   
   _regCounter++;
 
-  if (_regCounter == 3)
+  if (_regCounter == 4)
     _regCounter = 0;
-  
+
   return byteToReturn;
   
+}
+
+void Sensor::writeToSensorControlReg(int regAddress, int data)
+{
+  _sensorControlRegisters[regAddress] = data;
+}
+
+int Sensor::isSensorEnabled(int sensorLocation)
+{
+  return ((_sensorControlRegisters[0] >> sensorLocation) &  0x01);
 }
 #endif
